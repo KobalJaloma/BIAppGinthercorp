@@ -1,3 +1,4 @@
+import { FC } from "react";
 import { 
   SafeAreaView,
   View,
@@ -9,12 +10,22 @@ import {
 } from "react-native";
 import { colores } from '../utils/colorPallets';
 import { HeaderStateCard, AccountStateCard, ItemListNavCard } from "../components/cards";
-import { useScreenSize } from "../hooks";
+import { useScreenSize, useFetch } from "../hooks";
 import { LineGraphic, PieGraphic, BarGraphic } from "../components/graphics";
+import { RootStackParamList } from "../../App";
+import { StackNavigationProp } from "@react-navigation/stack"; 
 
-export const Home = ():JSX.Element => {
-  const { screenHeight } = useScreenSize();
 
+type HomeScreenProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'Home'>;
+}
+const url = `http://52.10.24.248/api/usuarios`;
+
+export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
+  
+  const testFetch = useFetch(url, 'get');
+  const { screenHeight, screenWidth } = useScreenSize();
+  
   return(
     <SafeAreaView>
       <StatusBar backgroundColor={'white'}/>
@@ -58,6 +69,7 @@ export const Home = ():JSX.Element => {
       </View>
       <ScrollView 
         style={{...styles.scrollContainer, height: screenHeight-200}}
+        scrollEnabled={true}
       >
         <ScrollView 
           style={{...styles.scrollContainerCarousel}}
@@ -66,14 +78,17 @@ export const Home = ():JSX.Element => {
           <AccountStateCard 
             unit="Secorp"
             price="4.348.975.98"
+            ruta="Secorp"
             />
           <AccountStateCard 
             unit="real shiny"
             price="300,245.98"
+            ruta="Real Shiny"
           />
           <AccountStateCard 
             unit="Driver Please"
             price="300,245.98"
+            ruta="Driver Please"
           />
         </ScrollView>
         {/* TEST GRAPHICS */}
@@ -84,15 +99,15 @@ export const Home = ():JSX.Element => {
           <BarGraphic />
           <BarGraphic />
         </ScrollView>
-        <PieGraphic />
+        <PieGraphic data={{}}/>
         <View style={styles.containerList}>
           <ItemListNavCard 
             name="Presupuesto ingresos"
             price="63,007,033.90"
             />
           <ItemListNavCard 
-          name="Presupuesto egresos"
-          price="14,667,752.90"
+            name="Presupuesto egresos"
+            price="14,667,752.90"
           />
           <ItemListNavCard 
             name="Utilidades"
@@ -115,7 +130,22 @@ export const Home = ():JSX.Element => {
             price="418,135.98"
           />
         </View>
+        <View style={{...styles.testContainers, width: screenWidth}}>
+          <Text>Testing</Text>
+          {
+            testFetch?.isLoading
+            ? <Text>is loading...</Text>
+            : <Text>{JSON.stringify(testFetch?.data)}</Text>
+          }
+        </View>
       </ScrollView>
+      {
+        testFetch?.isLoading
+        ? <View style={{...stylesLoad.container, width: screenWidth, height: screenHeight}}>
+            <Text style={{fontSize: 50, color: 'white'}}>...loading</Text>
+          </View>
+        : <View></View>
+      }
     </SafeAreaView>
   )
 }
@@ -183,5 +213,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 10
+  },
+  testContainers: {
+    height: 200,
+    backgroundColor: 'white'
+  }
+});
+
+const stylesLoad = StyleSheet.create({
+  container: {
+    backgroundColor: 'rgba(80, 10, 50, 0.5)',
+    zIndex: 10,
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 });

@@ -3,32 +3,50 @@ import {
   View,
   Text,
   StyleSheet, 
+  TouchableOpacity,
+  Alert,
   Image
 } from "react-native";
+import { FC } from "react";
 import { useScreenSize } from "../../hooks";
 import { colores } from '../../utils/colorPallets';
 
-export const AccountStateCard = ({unit = 'UNIT', price = '0.00'}):JSX.Element => {
+type accountStateCardProps = {
+  ruta: string,
+  unit: string,
+  price: string
+}
+
+export const AccountStateCard: FC<accountStateCardProps> = ({unit = 'UNIT', price = '0.00', ruta=''}):JSX.Element => {
   const { screenWidth } = useScreenSize();
 
   const unitFormat = ():string => {
     return unit.toUpperCase();
   }
 
+  const navigate = () => {
+
+  }
+
   return (
-    <View style={styles.cardContainer}>
-      <View style={styles.titleContainer}>
-        <Image source={require('../../images/cube-icon.png')}/>
-        <Text style={styles.textWhite}>{unitFormat()}</Text>
+    <TouchableOpacity
+      
+      onPress={() => Alert.alert(`Se presiono la card ${ruta}`)}
+    >
+      <View style={styles.cardContainer}>
+        <View style={styles.titleContainer}>
+          <Image source={require('../../images/cube-icon.png')}/>
+          <Text style={styles.textWhite}>{unitFormat()}</Text>
+        </View>
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoText}>IMPORTE TOTAL</Text>
+          <Text style={styles.infoPrice}>{price}</Text>
+        </View>
+        <Image source={require('../../images/LooperGroup.png')} 
+          style={styles.imgBack}
+          />
       </View>
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoText}>IMPORTE TOTAL</Text>
-        <Text style={styles.infoPrice}>{price}</Text>
-      </View>
-      <Image source={require('../../images/LooperGroup.png')} 
-        style={styles.imgBack}
-      />
-    </View>
+    </TouchableOpacity>
   )
 }
 

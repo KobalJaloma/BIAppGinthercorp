@@ -1,3 +1,4 @@
+import { FC } from "react";
 import { 
   SafeAreaView,
   View,
@@ -8,13 +9,20 @@ import {
   Button,
   TouchableOpacity,
   Image,
-  StatusBar
+  StatusBar,
+  Alert
 } from "react-native";
 import { colores } from '../utils/colorPallets';
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLogin } from "../hooks/useLogin";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../../App";
 
-export const Login = ():JSX.Element => {
+type LoginScreenProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'Login'>;
+}
+
+export const Login: FC<LoginScreenProps> = ({navigation}):JSX.Element => {
 
   //Form useStates
   const [userInput, onChangeUser] = useState('');
@@ -42,6 +50,18 @@ export const Login = ():JSX.Element => {
   const handleBorderColor = (side:string) => {
     return data.side == side ? 'red':styles.input.borderColor;
   }
+
+  const navigateToApp = () => {
+    if(isAuth) {
+      navigation.navigate('Home');
+      // Alert.alert('Puede Irse a la otra pantalla');
+    }
+  }
+
+  useEffect(() => {
+    navigateToApp();
+  }, [isAuth])
+  
 
   return(
     <SafeAreaView>

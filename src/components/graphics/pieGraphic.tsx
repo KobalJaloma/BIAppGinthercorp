@@ -1,6 +1,7 @@
 import {  
   PieChart
 } from "react-native-chart-kit";
+import { FC } from "react";
 import {  
   View,
   StyleSheet
@@ -8,8 +9,14 @@ import {
 import { colores, chartPallete } from "../../utils/colorPallets";
 import { useScreenSize } from "../../hooks";
 
-export const PieGraphic = ():JSX.Element => {
+type pieGraphicProps = {
+  data: Object
+}
+
+export const PieGraphic: FC<pieGraphicProps> = ({data = testData}):JSX.Element => {
+  
   const { screenWidth } = useScreenSize();
+
   return(
     <View style={styles.container}>
       <PieChart
@@ -28,44 +35,46 @@ export const PieGraphic = ():JSX.Element => {
   )
 }
 
-const { blue } = chartPallete;
+const { blue, bluePink} = chartPallete;
+const randomColor = () => bluePink[Math.round(Math.random() * bluePink.length)];
 
 const testData = [ 
   {
     name: "SECORP",
     population: 21500000,
-    color: blue[0],
+    color: randomColor(),
     legendFontColor: "#7F7F7F",
     legendFontSize: 15
   },
   {
     name: "REAL SHINY",
     population: 2800000,
-    color: blue[1],
+    color: randomColor(),
     legendFontColor: "#7F7F7F",
     legendFontSize: 15
   },
-{
-  name: "SECORP ALARMAS",
-  population: 527612,
-  color: blue[2],
-  legendFontColor: "#7F7F7F",
-  legendFontSize: 15
-},
-{
-  name: "DRIVER PLEASE",
-  population: 8538000,
-  color: blue[3],
-  legendFontColor: "#7F7F7F",
-  legendFontSize: 15
-},
-{
-  name: "SABOR A MEXA",
-  population: 11920000,
-  color: blue[4],
-  legendFontColor: "#7F7F7F",
-  legendFontSize: 15
-}];
+  {
+    name: "SECORP ALARMAS",
+    population: 527612,
+    color: randomColor(),
+    legendFontColor: "#7F7F7F",
+    legendFontSize: 15
+  },
+  {
+    name: "DRIVER PLEASE",
+    population: 8538000,
+    color: randomColor(),
+    legendFontColor: "#7F7F7F",
+    legendFontSize: 15
+  },
+  {
+    name: "SABOR A MEXA",
+    population: 11920000,
+    color: randomColor(),
+    legendFontColor: "#7F7F7F",
+    legendFontSize: 15
+}
+];
 
 const chartConf = {
   backgroundColor: colores.primary,

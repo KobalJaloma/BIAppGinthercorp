@@ -1,3 +1,4 @@
+import { FC } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -10,22 +11,48 @@ import {
   Alert
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-// import { createStackNavigator } from "@react-navigation/stack";
+import { createStackNavigator } from "@react-navigation/stack";
 import { Login } from "./src/auth/login";
 import { Home } from "./src/pages/guardado";
 import { useScreenSize } from "./src/hooks";
 import { authProvider } from "./src/context/authProvider";
 
-function App(): JSX.Element {
 
-  // const Stack = createStackNavigator();
+export type RootStackParamList = {
+  Login: undefined,
+  Home: undefined
+}
+const Stack = createStackNavigator<RootStackParamList>();
+
+const App: FC = () => {
+
+  
   const { screenHeight } = useScreenSize();
   return (
-    <NavigationContainer>
-      {/* <authProvider> */}
-        <View style={{backgroundColor: 'white', height: screenHeight}}>
+    <NavigationContainer   
+  
+    >
+      <View style={{backgroundColor: 'white', height: screenHeight}}>
+        <Stack.Navigator 
+          initialRouteName="Login"
+          screenOptions={{
+            headerShown: false
+          }}
+        >
+          <Stack.Screen 
+            name='Login'
+            component={Login}
+            options={{title: 'Login', cardStyle: {...styles.white}}}
+          />
+          <Stack.Screen 
+            name='Home'
+            component={Home}
+            options={{title: 'Home', cardStyle: {...styles.white}}}
+          />
+        </Stack.Navigator>
+          {/* <authProvider> */}
           {/* <Login/> */}
-          <Home/>
+          {/* <Home/> */}
         </View>
       {/* </authProvider> */}
     </NavigationContainer>
@@ -54,6 +81,9 @@ const styles = StyleSheet.create({
   },
   green: {
     backgroundColor: 'green'
+  },
+  white: {
+    backgroundColor: 'white'
   }
 });
 
