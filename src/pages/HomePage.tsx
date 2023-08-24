@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import { 
   SafeAreaView,
   View,
@@ -9,23 +9,41 @@ import {
   StatusBar,
   Alert
 } from "react-native";
+import { StackNavigationProp } from "@react-navigation/stack"; 
 import { colores } from '../utils/colorPallets';
 import { HeaderStateCard, AccountStateCard, ItemListNavCard } from "../components/cards";
 import { useScreenSize, useFetch } from "../hooks";
 import { LineGraphic, PieGraphic, BarGraphic } from "../components/graphics";
 import { RootStackParamList } from "../../App";
-import { StackNavigationProp } from "@react-navigation/stack"; 
+import { envConfig } from "../../config";
 
 
 type HomeScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Home'>;
 }
-const url = `http://52.10.24.248/api/usuarios`;
+const fechaI = '2023-08-01';
+const fechaF = '2023-08-024';
+
+const url = `${envConfig.urlBase}denken/calculosgraficas/balances?fechaI=${fechaI}&fechaF=${fechaF}`;
 
 export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
   
-  const testFetch = useFetch(url, 'get');
+  const balanceFetch = useFetch(url, 'get');
   const { screenHeight, screenWidth } = useScreenSize();
+  
+
+  useEffect(() => {
+    console.log(JSON.stringify(balanceFetch?.data));
+    
+  }, [url])
+  
+  const RenderBalance = () => {
+    if(balanceFetch?.data ) {
+      return(
+        <View></View>
+      )
+    }
+  }
   
   const navigateToBranch = (id: string, name: string) => {
     navigation.navigate('Unit', { id: id, name: name});
@@ -45,25 +63,9 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
             price="10,234,244.00"
             arrow={false}
           />
-          <HeaderStateCard 
-            unit="Real Shiny"
-            price="1,234,244.00"
-            arrow={true}
-          />
-          <HeaderStateCard 
-            unit="In driver"
-            price="234,244.00"
-          />
-          <HeaderStateCard 
-            unit="Secorp alarmas"
-            price="934,244.00"
-            arrow={false}
-          />
-          <HeaderStateCard 
-            unit="caudillos"
-            price="30,244.00"
-            arrow={false}
-          />
+          {
+           
+          }
         </ScrollView>
         <View style={styles.dockBottom}>
           <View style={styles.dockTextContainer}>
@@ -140,7 +142,7 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
         </View>
       </ScrollView>
       {
-        testFetch?.isLoading
+        balanceFetch?.isLoading
         ? <View style={{...stylesLoad.container, width: screenWidth, height: screenHeight}}>
             <Text style={{fontSize: 50, color: 'white'}}>...loading</Text>
           </View>

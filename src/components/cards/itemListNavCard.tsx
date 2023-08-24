@@ -11,7 +11,9 @@ import { useScreenSize } from "../../hooks";
 import { colores } from "../../utils/colorPallets";
 import { LinearGradient } from "react-native-linear-gradient";
 
-export const ItemListNavCard = ({name = '', price = ''}):JSX.Element => {
+const bFunction=()=>{};
+
+export const ItemListNavCard = ({name = '', price = '', isButton=true}):JSX.Element => {
   const { screenWidth } = useScreenSize();
 
   const test = () => {
@@ -38,8 +40,9 @@ export const ItemListNavCard = ({name = '', price = ''}):JSX.Element => {
         </View>
       </View>
       <TouchableOpacity 
-        style={styles.navContainer}
+        style={{...styles.navContainer, opacity: isButton?1:0}}
         onPress={test}
+        disabled={!isButton}
       >
         <Image 
           source={require('../../images/right.png')}

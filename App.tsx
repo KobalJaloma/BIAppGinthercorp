@@ -13,19 +13,19 @@ import {
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from "@react-navigation/stack";
 import { Login } from "./src/auth/login";
-import { Home } from "./src/pages/guardado";
+// import { Home } from "./src/pages/guardado";
 import { useScreenSize } from "./src/hooks";
 import { authProvider } from "./src/context/authProvider";
-import { BranchPage } from "./src/pages/BranchPage";
+import { UnitBusinessPage, Home } from "./src/pages";
 
 
 export type RootStackParamList = {
   Login: undefined,
   Home: undefined,
-  Branch: Branches,
+  Unit: UnitBussines,
 }
 
-interface Branches {
+interface UnitBussines {
   id: string;
   name: string;
 }
@@ -59,8 +59,8 @@ const App: FC = () => {
             options={{title: 'Home', cardStyle: {...styles.white}}}
           />
           <Stack.Screen 
-            name='Branch'
-            component={BranchPage}
+            name='Unit'
+            component={UnitBusinessPage}
             options={{title: 'Branch', cardStyle: {...styles.white}}}
           />
         </Stack.Navigator>
