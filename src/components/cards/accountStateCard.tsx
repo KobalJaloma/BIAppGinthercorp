@@ -14,10 +14,15 @@ import { colores } from '../../utils/colorPallets';
 type accountStateCardProps = {
   ruta: string,
   unit: string,
-  price: string
+  price: string,
+  function: () => void
 }
 
-export const AccountStateCard: FC<accountStateCardProps> = ({unit = 'UNIT', price = '0.00', ruta=''}):JSX.Element => {
+const functioDefault = () => {
+  Alert.alert('Push The Button')
+}
+
+export const AccountStateCard: FC<accountStateCardProps> = ({unit = 'UNIT', price = '0.00', ruta='', function:functioDefault}):JSX.Element => {
   const { screenWidth } = useScreenSize();
 
   const unitFormat = ():string => {
@@ -31,7 +36,7 @@ export const AccountStateCard: FC<accountStateCardProps> = ({unit = 'UNIT', pric
   return (
     <TouchableOpacity
       
-      onPress={() => Alert.alert(`Se presiono la card ${ruta}`)}
+      onPress={functioDefault}
     >
       <View style={styles.cardContainer}>
         <View style={styles.titleContainer}>

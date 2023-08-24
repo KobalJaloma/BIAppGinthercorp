@@ -6,7 +6,8 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  StatusBar
+  StatusBar,
+  Alert
 } from "react-native";
 import { colores } from '../utils/colorPallets';
 import { HeaderStateCard, AccountStateCard, ItemListNavCard } from "../components/cards";
@@ -25,6 +26,10 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
   
   const testFetch = useFetch(url, 'get');
   const { screenHeight, screenWidth } = useScreenSize();
+  
+  const navigateToBranch = (id: string, name: string) => {
+    navigation.navigate('Branch', { id: id, name: name});
+  }
   
   return(
     <SafeAreaView>
@@ -79,16 +84,19 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
             unit="Secorp"
             price="4.348.975.98"
             ruta="Secorp"
+            function={() => {navigateToBranch('1', "Secorp")}}
             />
           <AccountStateCard 
             unit="real shiny"
             price="300,245.98"
             ruta="Real Shiny"
-          />
+            function={() => {navigateToBranch('2', "Real Shiny")}}
+            />
           <AccountStateCard 
             unit="Driver Please"
             price="300,245.98"
             ruta="Driver Please"
+            function={() => {navigateToBranch('3', "Driver Please")}}
           />
         </ScrollView>
         {/* TEST GRAPHICS */}

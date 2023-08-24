@@ -16,18 +16,27 @@ import { Login } from "./src/auth/login";
 import { Home } from "./src/pages/guardado";
 import { useScreenSize } from "./src/hooks";
 import { authProvider } from "./src/context/authProvider";
+import { BranchPage } from "./src/pages/BranchPage";
 
 
 export type RootStackParamList = {
   Login: undefined,
-  Home: undefined
+  Home: undefined,
+  Branch: Branches,
 }
+
+interface Branches {
+  id: string;
+  name: string;
+}
+
+
 const Stack = createStackNavigator<RootStackParamList>();
 
 const App: FC = () => {
-
   
   const { screenHeight } = useScreenSize();
+  
   return (
     <NavigationContainer   
   
@@ -48,6 +57,11 @@ const App: FC = () => {
             name='Home'
             component={Home}
             options={{title: 'Home', cardStyle: {...styles.white}}}
+          />
+          <Stack.Screen 
+            name='Branch'
+            component={BranchPage}
+            options={{title: 'Branch', cardStyle: {...styles.white}}}
           />
         </Stack.Navigator>
           {/* <authProvider> */}
