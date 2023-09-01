@@ -83,7 +83,7 @@ export const Login: FC<LoginScreenProps> = ({navigation}):JSX.Element => {
         <View style={styles.containerPassword}>
           <TextInput 
             style={{...styles.input, flex: 1, borderColor: `${handleBorderColor('PASSWORD')}`}}
-            placeholder=" Contrasena"
+            placeholder="Contraseña"
             secureTextEntry={isPasswordSecure}
             value={passwordInput}
             onChangeText={onChangePassword}

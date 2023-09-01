@@ -1,4 +1,4 @@
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 import { 
   SafeAreaView,
   View,
@@ -10,45 +10,173 @@ import {
   Alert
 } from "react-native";
 import { StackNavigationProp } from "@react-navigation/stack"; 
-import { colores } from '../utils/colorPallets';
+import { colores, chartPallete, currentDay, firstOfMOnth } from '../utils';
 import { HeaderStateCard, AccountStateCard, ItemListNavCard } from "../components/cards";
 import { useScreenSize, useFetch } from "../hooks";
 import { LineGraphic, PieGraphic, BarGraphic } from "../components/graphics";
 import { RootStackParamList } from "../../App";
 import { envConfig } from "../../config";
 
+// IMPORT TYPES
+import { dataGraphic } from "../components/graphics/pieGraphic";
+
 
 type HomeScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Home'>;
 }
-const fechaI = '2023-08-01';
-const fechaF = '2023-08-024';
+type LoadingScreenProps = {
+  isSomething: boolean
+}
+
+const fechaI = firstOfMOnth();
+const fechaF = currentDay();
 
 const url = `${envConfig.urlBase}denken/calculosgraficas/balances?fechaI=${fechaI}&fechaF=${fechaF}`;
+
 
 export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
   
   const balanceFetch = useFetch(url, 'get');
   const { screenHeight, screenWidth } = useScreenSize();
-  
+  const [budgets, setBudgets] = useState({
+    egresos: '0.0',
+    ingresos: '0.0',
+    utilidad: '0.0'
+  })
+  const [barChart, setbarChart] = useState<any>({
+    label: [],
+    data: [],
+  })
+  const [pieChart, setPieChart] = useState<any[]>([]);
+
 
   useEffect(() => {
-    console.log(JSON.stringify(balanceFetch?.data));
-    
-  }, [url])
+    budgetsCalculated();
+    incomeCalculations();
+  }, [balanceFetch?.isLoading])
   
-  const RenderBalance = () => {
-    if(balanceFetch?.data ) {
-      return(
-        <View></View>
+  const RenderStateCards = () => {
+    if(balanceFetch?.data) {
+      
+      const units:any[] = balanceFetch.data;
+      let i = 0;
+      return units.map( unit => {
+        const egreso = parseFloat(unit.PRESUPUESTO?? '0');
+        const ingreso = parseFloat(unit.EJERCIDO?? '0');
+        let utilidad = ingreso - egreso;
+        let utilidadFormat:string = utilidad.toLocaleString('en').toString();
+        
+        i++;
+        return (
+          <AccountStateCard
+            price={ utilidad.toString() ?? 'NO DATA'}
+            unit={(unit.FAMILIA ) ?? 'DESCONOCIDO'} 
+            OnUse={   
+              () => navigateToBranch(unit.id_unidad_negocio?? 0,unit.FAMILIA?? 'DESCONOCIDO', utilidadFormat)
+            }
+            key={i}
+          />
+        )
+      }
+      );
+    }
+  }
+
+  const RenderBarGraphic = () => {
+    if(barChart.label.length != 0) {
+      console.log('En Render Graf');
+      console.log(JSON.stringify(barChart));
+      // console.log('Lenght: ' + barChart.label.length);
+      return (
+        <BarGraphic 
+            labels={barChart.label}
+            dataSets={barChart.dataSets}
+            barConfig={{
+              barPercentage: 0.5
+            }}
+            widthScale={1+(barChart.label.length / 10)}
+            height={300}
+            verticalLabelRotation={20}
+            showValuesOnTopOfBars={false}
+        /> 
       )
     }
   }
-  
-  const navigateToBranch = (id: string, name: string) => {
-    navigation.navigate('Unit', { id: id, name: name});
+
+  const RenderPieGraphic = () => {
+      if(pieChart) {
+        console.log(pieChart);
+        
+        return (
+          <PieGraphic
+            data={pieChart}
+          />
+        )
+      }
   }
   
+  const budgetsCalculated = () => {
+    let egresos = 0;
+    let ingresos = 0;
+    let utilidad = 0;
+
+    if(!balanceFetch?.data)
+      return;
+    
+    const data:any[] = balanceFetch.data;
+
+    data.map( units => {
+      egresos += parseFloat(units.PRESUPUESTO?? 0);
+      ingresos += parseFloat(units.EJERCIDO?? 0);
+    });
+
+    utilidad = ingresos - egresos;
+    
+    // console.log(`utilidad: ${utilidad} \n ingresos: ${ingresos} \n egresos" ${egresos}`);
+    
+    setBudgets({
+      ...budgets,
+      egresos: egresos.toString(),
+      ingresos: ingresos.toString(),
+      utilidad: utilidad.toString()
+    })
+  }
+
+  const incomeCalculations = () => {    
+    let labels: string[] = [];
+    let stats: any[] = [];
+
+    if(!balanceFetch?.data)
+      return;
+
+    const data:any[] = balanceFetch.data;
+    
+    data.forEach( unit => {
+      if(unit.EJERCIDO != 0) {
+        labels.push(unit.FAMILIA??'DESCONOCIDO');
+        stats.push( (Math.round(unit.EJERCIDO)/1000 ) ?? 0);
+
+        setPieChart(prev => [...prev, {
+          name: unit.FAMILIA,
+          population: unit.EJERCIDO,
+          color: randomColor(),
+          legendFontColor: colores.textPrimary,
+          legendFontSize: colores.textPrimary
+        }]);
+      }
+    } );
+    
+    setbarChart({
+      label: labels,
+      dataSets: stats
+    })
+    
+  }
+
+  const navigateToBranch = (id: string, name: string, balanceMoney:string) => {
+    navigation.navigate('Unit', { id: id, name: name, balanceMoney: balanceMoney});
+  }
+
   return(
     <SafeAreaView>
       <StatusBar backgroundColor={'white'}/>
@@ -63,9 +191,11 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
             price="10,234,244.00"
             arrow={false}
           />
-          {
-           
-          }
+          <HeaderStateCard 
+            unit="Secorp"
+            price="234,244.00"
+            arrow={true}
+          />
         </ScrollView>
         <View style={styles.dockBottom}>
           <View style={styles.dockTextContainer}>
@@ -82,72 +212,52 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
           style={{...styles.scrollContainerCarousel}}
           horizontal
         >
-          <AccountStateCard 
-            unit="Secorp"
-            price="4.348.975.98"
-            ruta="Secorp"
-            function={() => {navigateToBranch('1', "Secorp")}}
-            />
-          <AccountStateCard 
-            unit="real shiny"
-            price="300,245.98"
-            ruta="Real Shiny"
-            function={() => {navigateToBranch('2', "Real Shiny")}}
-            />
-          <AccountStateCard 
-            unit="Driver Please"
-            price="300,245.98"
-            ruta="Driver Please"
-            function={() => {navigateToBranch('3', "Driver Please")}}
-          />
+          {
+             RenderStateCards() 
+          }
         </ScrollView>
         {/* TEST GRAPHICS */}
         <LineGraphic />
+       
+        <View style={{justifyContent: 'center', alignItems: 'center', marginTop: 15}}>
+          <Text style={styles.dockText}>Ingresos Por Unidad</Text>
+        </View>
         <ScrollView 
           horizontal
+          style={{...styles.scrollViewGraphic, width: screenWidth - 10}}
         >
-          <BarGraphic />
-          <BarGraphic />
+          {
+            RenderBarGraphic()
+          }
         </ScrollView>
-        <PieGraphic data={{}}/>
+          
+        {/* <PieGraphic/> */}
+        {
+          RenderPieGraphic()
+        }
+
         <View style={styles.containerList}>
           <ItemListNavCard 
             name="Presupuesto ingresos"
-            price="63,007,033.90"
+            price={budgets.ingresos}
             />
           <ItemListNavCard 
             name="Presupuesto egresos"
-            price="14,667,752.90"
+            price={budgets.egresos}
           />
           <ItemListNavCard 
             name="Utilidades"
-            price="48,339,281.78"
-          />
-          <ItemListNavCard 
-            name="ingreso actual"
-            price="4,438,975.98"
-          />
-          <ItemListNavCard 
-            name="egreso actual"
-            price="418,135.98"
-          />
-          <ItemListNavCard 
-            name="cxc"
-            price="418,135.98"
-          />
-          <ItemListNavCard 
-            name="cxp"
-            price="418,135.98"
+            price={budgets.utilidad}
           />
         </View>
       </ScrollView>
       {
-        balanceFetch?.isLoading
-        ? <View style={{...stylesLoad.container, width: screenWidth, height: screenHeight}}>
-            <Text style={{fontSize: 50, color: 'white'}}>...loading</Text>
-          </View>
-        : <View></View>
+        balanceFetch?.isLoading && 
+        <LoadingScreen
+          isSomething={balanceFetch?.isLoading}
+        />
       }
+      
     </SafeAreaView>
   )
 }
@@ -219,12 +329,32 @@ const styles = StyleSheet.create({
   testContainers: {
     height: 200,
     backgroundColor: 'white'
+  },
+  scrollViewGraphic: {
+    overflow: 'hidden'
   }
 });
 
+
+const LoadingScreen: FC<LoadingScreenProps> = ({isSomething}):JSX.Element => {
+  
+  const { screenHeight, screenWidth } = useScreenSize();
+  
+  return (
+    isSomething
+    ? <View style={{...stylesLoad.container, width: screenWidth, height: screenHeight}}>
+        <Text style={{fontSize: 50, color: 'white'}}>...loading</Text>
+      </View>
+    : <View></View>
+  )
+}
+
+const { blue, bluePink} = chartPallete;
+const randomColor = () => bluePink[Math.round(Math.random() * bluePink.length)];
+
 const stylesLoad = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(80, 10, 50, 0.5)',
+    backgroundColor: colores.primary  ,
     zIndex: 10,
     position: 'absolute',
     justifyContent: 'center',

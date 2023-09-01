@@ -20,6 +20,10 @@ export const ItemListNavCard = ({name = '', price = '', isButton=true}):JSX.Elem
     Alert.alert(`se presiono el boton de ${name}`);
   }
 
+  const moneyFormat = ():string => {
+    return parseFloat(price).toLocaleString('en');
+  }
+
   return (
     <LinearGradient 
       start={{x : 0,y : 0}}
@@ -36,7 +40,7 @@ export const ItemListNavCard = ({name = '', price = '', isButton=true}):JSX.Elem
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.text}>{name ? name.toUpperCase(): 'NOT FOUND'}</Text>
-          <Text style={styles.price}>${price ? price.toUpperCase() : 'NOT FOUND'}</Text>
+          <Text style={styles.price}>$ {price ? moneyFormat() : 'NOT FOUND'}</Text>
         </View>
       </View>
       <TouchableOpacity 

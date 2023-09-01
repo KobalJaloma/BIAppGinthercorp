@@ -12,31 +12,30 @@ import { useScreenSize } from "../../hooks";
 import { colores } from '../../utils/colorPallets';
 
 type accountStateCardProps = {
-  ruta: string,
   unit: string,
   price: string,
-  function: () => void
+  OnUse?: () => void
 }
 
 const functioDefault = () => {
   Alert.alert('Push The Button')
 }
 
-export const AccountStateCard: FC<accountStateCardProps> = ({unit = 'UNIT', price = '0.00', ruta='', function:functioDefault}):JSX.Element => {
+export const AccountStateCard: FC<accountStateCardProps> = ({unit = 'UNIT', price = '0.00', OnUse=functioDefault}):JSX.Element => {
   const { screenWidth } = useScreenSize();
 
   const unitFormat = ():string => {
     return unit.toUpperCase();
   }
 
-  const navigate = () => {
-
+  const priceFormat = ():string => {
+    return parseFloat(price).toLocaleString('en');
   }
 
   return (
     <TouchableOpacity
       
-      onPress={functioDefault}
+      onPress={OnUse}
     >
       <View style={styles.cardContainer}>
         <View style={styles.titleContainer}>
@@ -45,7 +44,7 @@ export const AccountStateCard: FC<accountStateCardProps> = ({unit = 'UNIT', pric
         </View>
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>IMPORTE TOTAL</Text>
-          <Text style={styles.infoPrice}>{price}</Text>
+          <Text style={styles.infoPrice}>$ {priceFormat()}</Text>
         </View>
         <Image source={require('../../images/LooperGroup.png')} 
           style={styles.imgBack}

@@ -1,26 +1,35 @@
 import {  
   PieChart
 } from "react-native-chart-kit";
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
 import {  
   View,
-  StyleSheet
+  StyleSheet,
 } from "react-native";
 import { colores, chartPallete } from "../../utils/colorPallets";
 import { useScreenSize } from "../../hooks";
 
 type pieGraphicProps = {
-  data: Object
+  data: any[]
 }
 
-export const PieGraphic: FC<pieGraphicProps> = ({data = testData}):JSX.Element => {
+export type dataGraphic = {
+    name: string,
+    population: number,
+    color: string,
+    legendFontColor: string,
+    legendFontSize: 15
+}
+
+export const PieGraphic: FC<pieGraphicProps> = ({data = defaultData}):JSX.Element => {
   
   const { screenWidth } = useScreenSize();
+  const [pieData, setPieData] = useState<dataGraphic[]>();
 
   return(
     <View style={styles.container}>
       <PieChart
-        data={testData}
+        data={pieData??defaultData}
         width={screenWidth - 20}
         height={200}
         chartConfig={chartConf}
@@ -29,8 +38,7 @@ export const PieGraphic: FC<pieGraphicProps> = ({data = testData}):JSX.Element =
         paddingLeft={"15"}
         center={[0, 0]}
         absolute={false}
-        
-        />
+      />
     </View>
   )
 }
@@ -38,42 +46,41 @@ export const PieGraphic: FC<pieGraphicProps> = ({data = testData}):JSX.Element =
 const { blue, bluePink} = chartPallete;
 const randomColor = () => bluePink[Math.round(Math.random() * bluePink.length)];
 
-const testData = [ 
-  {
-    name: "SECORP",
+const defaultData: dataGraphic[] = [{
+    name: "Seoul",
     population: 21500000,
-    color: randomColor(),
+    color: "rgba(131, 167, 234, 1)",
     legendFontColor: "#7F7F7F",
     legendFontSize: 15
   },
   {
-    name: "REAL SHINY",
+    name: "Toronto",
     population: 2800000,
-    color: randomColor(),
+    color: "#F00",
     legendFontColor: "#7F7F7F",
     legendFontSize: 15
   },
   {
-    name: "SECORP ALARMAS",
+    name: "Beijing",
     population: 527612,
-    color: randomColor(),
+    color: "red",
     legendFontColor: "#7F7F7F",
     legendFontSize: 15
   },
   {
-    name: "DRIVER PLEASE",
+    name: "New York",
     population: 8538000,
-    color: randomColor(),
+    color: "#F23FA3",
     legendFontColor: "#7F7F7F",
     legendFontSize: 15
   },
   {
-    name: "SABOR A MEXA",
+    name: "Moscow",
     population: 11920000,
-    color: randomColor(),
+    color: "rgb(0, 0, 255)",
     legendFontColor: "#7F7F7F",
     legendFontSize: 15
-}
+  }
 ];
 
 const chartConf = {

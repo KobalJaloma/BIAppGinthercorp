@@ -13,6 +13,7 @@ import { StackNavigationProp, StackScreenProps } from "@react-navigation/stack";
 import { RootStackParamList } from "../../App";
 import { useScreenSize } from "../hooks/useScreenSize";
 import { ItemListNavCard } from "../components/cards";
+import { currentDay } from "../utils";
 
 type BranchPageProps = StackScreenProps<RootStackParamList, 'Unit'>;
 
@@ -27,7 +28,7 @@ export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.E
         <View style={{...styles.container}}>
             <View style={{...styles.sectionTop, width: screenWidth}}>
                 <Text style={styles.containerTopText}>{route.params.name.toUpperCase()}</Text>
-                <Text style={styles.containerTopPrice}>$ 5,000,000.00</Text>
+                <Text style={styles.containerTopPrice}>$ {route.params.balanceMoney}</Text>
                 {/* BACK BUTTON */}
                 <TouchableOpacity 
                     style={styles.buttonBack}
@@ -64,7 +65,7 @@ export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.E
                     />
                 </View>
                 <View style={styles.chartsContainer}>
-
+                    <Text>{currentDay()}</Text>
                 </View>
             </ScrollView>
         </View>

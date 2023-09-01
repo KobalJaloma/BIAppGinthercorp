@@ -28,6 +28,7 @@ export type RootStackParamList = {
 interface UnitBussines {
   id: string;
   name: string;
+  balanceMoney: string
 }
 
 
