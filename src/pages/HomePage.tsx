@@ -39,40 +39,47 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
   const balanceFetch = useFetch(url, 'get');
   const { screenHeight, screenWidth } = useScreenSize();
   const [budgets, setBudgets] = useState({
-    egresos: '0.0',
-    ingresos: '0.0',
-    utilidad: '0.0'
+    expense: '0.0',
+    income: '0.0',
+    utility: '0.0'
   })
   const [barChart, setbarChart] = useState<any>({
     label: [],
     data: [],
   })
-  const [pieChart, setPieChart] = useState<any[]>([]);
+  const [pieChart, setPieChart] = useState<any []>([]);
 
 
   useEffect(() => {
-    budgetsCalculated();
+    calculatedBudgets();
     incomeCalculations();
   }, [balanceFetch?.isLoading])
   
+  // COMPONENT RENDERS
   const RenderStateCards = () => {
     if(balanceFetch?.data) {
       
       const units:any[] = balanceFetch.data;
+
       let i = 0;
       return units.map( unit => {
-        const egreso = parseFloat(unit.PRESUPUESTO?? '0');
-        const ingreso = parseFloat(unit.EJERCIDO?? '0');
-        let utilidad = ingreso - egreso;
-        let utilidadFormat:string = utilidad.toLocaleString('en').toString();
-        
+        const expense = parseFloat(unit.PRESUPUESTO?? '0');
+        const income = parseFloat(unit.EJERCIDO?? '0');
+        let utility = income - expense;
+
         i++;
         return (
           <AccountStateCard
-            price={ utilidad.toString() ?? 'NO DATA'}
+            price={ utility.toString() ?? 'NO DATA'}
             unit={(unit.FAMILIA ) ?? 'DESCONOCIDO'} 
             OnUse={   
-              () => navigateToBranch(unit.id_unidad_negocio?? 0,unit.FAMILIA?? 'DESCONOCIDO', utilidadFormat)
+              () => navigateToBranch (
+                unit.id_unidad_negocio?? 0,
+                unit.FAMILIA?? 'DESCONOCIDO',
+                income,
+                expense, 
+                utility 
+              )
             }
             key={i}
           />
@@ -84,8 +91,6 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
 
   const RenderBarGraphic = () => {
     if(barChart.label.length != 0) {
-      console.log('En Render Graf');
-      console.log(JSON.stringify(barChart));
       // console.log('Lenght: ' + barChart.label.length);
       return (
         <BarGraphic 
@@ -94,31 +99,33 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
             barConfig={{
               barPercentage: 0.5
             }}
-            widthScale={1+(barChart.label.length / 10)}
+            widthScale={1+(barChart.label.length / 20)}
             height={300}
             verticalLabelRotation={20}
             showValuesOnTopOfBars={false}
+            isRounded={true}
         /> 
       )
     }
   }
 
-  const RenderPieGraphic = () => {
-      if(pieChart) {
-        console.log(pieChart);
-        
-        return (
-          <PieGraphic
-            data={pieChart}
-          />
-        )
-      }
+  const RenderPieGraphic = () => { 
+      if(!pieChart)
+        return;
+
+      return (
+        <PieGraphic
+          data={pieChart}
+        />
+      )
+      
   }
   
-  const budgetsCalculated = () => {
-    let egresos = 0;
-    let ingresos = 0;
-    let utilidad = 0;
+  // REQUIRE CALCULATIONS FOR RENDERS
+  const calculatedBudgets = () => {
+    let expense = 0;
+    let income = 0;
+    let utility = 0;
 
     if(!balanceFetch?.data)
       return;
@@ -126,19 +133,17 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
     const data:any[] = balanceFetch.data;
 
     data.map( units => {
-      egresos += parseFloat(units.PRESUPUESTO?? 0);
-      ingresos += parseFloat(units.EJERCIDO?? 0);
+      expense += parseFloat(units.PRESUPUESTO?? 0);
+      income += parseFloat(units.EJERCIDO?? 0);
     });
 
-    utilidad = ingresos - egresos;
-    
-    // console.log(`utilidad: ${utilidad} \n ingresos: ${ingresos} \n egresos" ${egresos}`);
+    utility = income - expense;
     
     setBudgets({
       ...budgets,
-      egresos: egresos.toString(),
-      ingresos: ingresos.toString(),
-      utilidad: utilidad.toString()
+      expense: expense.toString(),
+      income: income.toString(),
+      utility: utility.toString()
     })
   }
 
@@ -150,19 +155,20 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
       return;
 
     const data:any[] = balanceFetch.data;
+    const pieData:any[] = [];
     
     data.forEach( unit => {
       if(unit.EJERCIDO != 0) {
         labels.push(unit.FAMILIA??'DESCONOCIDO');
         stats.push( (Math.round(unit.EJERCIDO)/1000 ) ?? 0);
 
-        setPieChart(prev => [...prev, {
+        pieData.push({
           name: unit.FAMILIA,
-          population: unit.EJERCIDO,
+          population: Math.round(unit.EJERCIDO),
           color: randomColor(),
           legendFontColor: colores.textPrimary,
-          legendFontSize: colores.textPrimary
-        }]);
+          legendFontSize: 15
+        });
       }
     } );
     
@@ -170,11 +176,13 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
       label: labels,
       dataSets: stats
     })
+
+    setPieChart(pieData);
     
   }
 
-  const navigateToBranch = (id: string, name: string, balanceMoney:string) => {
-    navigation.navigate('Unit', { id: id, name: name, balanceMoney: balanceMoney});
+  const navigateToBranch = (id: string, name: string, income:number, expense:number, utility:number,) => {
+    navigation.navigate('Unit', { id: id, name: name, income: income, expense: expense, utility: utility});
   }
 
   return(
@@ -216,11 +224,8 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
              RenderStateCards() 
           }
         </ScrollView>
-        {/* TEST GRAPHICS */}
-        <LineGraphic />
-       
-        <View style={{justifyContent: 'center', alignItems: 'center', marginTop: 15}}>
-          <Text style={styles.dockText}>Ingresos Por Unidad</Text>
+        <View>
+          <LineGraphic />
         </View>
         <ScrollView 
           horizontal
@@ -230,24 +235,23 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
             RenderBarGraphic()
           }
         </ScrollView>
-          
-        {/* <PieGraphic/> */}
-        {
-          RenderPieGraphic()
-        }
-
+        <View>
+          {
+            RenderPieGraphic()
+          }
+        </View>
         <View style={styles.containerList}>
           <ItemListNavCard 
             name="Presupuesto ingresos"
-            price={budgets.ingresos}
+            price={budgets.income}
             />
           <ItemListNavCard 
             name="Presupuesto egresos"
-            price={budgets.egresos}
+            price={budgets.expense}
           />
           <ItemListNavCard 
             name="Utilidades"
-            price={budgets.utilidad}
+            price={budgets.utility}
           />
         </View>
       </ScrollView>
@@ -324,7 +328,8 @@ const styles = StyleSheet.create({
   containerList: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 10
+    marginVertical: 10,
+    paddingBottom: 40
   },
   testContainers: {
     height: 200,

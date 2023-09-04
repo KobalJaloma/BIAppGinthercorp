@@ -21,6 +21,7 @@ type BarGraphic = {
   verticalLabelRotation?: number;
   showValuesOnTopOfBars?: boolean;
   activeOpacityAnim?: boolean;
+  isRounded?: boolean
 }
 type barConfig = { 
   strokeWidth?: number, // optional, default 3
@@ -37,7 +38,8 @@ export const BarGraphic: FC<BarGraphic> = (
     height = 250, 
     widthScale = 1, 
     verticalLabelRotation = 0,
-    activeOpacityAnim = false
+    activeOpacityAnim = false,
+    isRounded = true
   }
 ):JSX.Element => {
 
@@ -60,7 +62,7 @@ export const BarGraphic: FC<BarGraphic> = (
       activeOpacity={1}
     >
       <BarChart 
-        style={styles.graphic}
+        style={{...styles.graphic, borderRadius: isRounded ? 20 : 0}}
         data={{
           labels: labels,
           datasets: [

@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { envConfig } from "../../config";
 import { Axios } from "axios";
+
+const token = 'Test10019';
 
 export const useLogin = (user: string, password:string ) => {
 
@@ -7,7 +10,7 @@ export const useLogin = (user: string, password:string ) => {
   const [isAuth, setisAuth] = useState<boolean>(false);
   const [data, setData] = useState<any>({status: '', side: ''}); //set default
   
-  const urlAuth = `http://52.10.24.248/api/usuarios/auth?user=${user}&password=${password}`;
+  const urlAuth = `${envConfig.urlBase}usuarios/auth?user=${user.trim()}&password=${password.trim()}`;
 
   const getAuth = async() => {
     setisLoading(true);
@@ -15,7 +18,7 @@ export const useLogin = (user: string, password:string ) => {
       method: 'POST',
       headers: {
         'content-type': 'application/json;charset=UTF-8',
-        'token': 'Test10019'
+        'token': token
       }
     });
     const data = await response.json();

@@ -14,21 +14,29 @@ import { RootStackParamList } from "../../App";
 import { useScreenSize } from "../hooks/useScreenSize";
 import { ItemListNavCard } from "../components/cards";
 import { currentDay } from "../utils";
+import { envConfig } from "../../config";
+import { useFetch } from "../hooks";
 
 type BranchPageProps = StackScreenProps<RootStackParamList, 'Unit'>;
 
 export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.Element => {
+    const url = `${envConfig}`;
     const { screenHeight, screenWidth } = useScreenSize();
+    const { id, name, expense, income, utility } = route.params;
     
     const navigateToHome = () => {
         navigation.navigate('Home');
     }
 
+    const moneyFormat = (num: number) => {
+        return num.toLocaleString('en').toString();
+    }
+
     return(
         <View style={{...styles.container}}>
             <View style={{...styles.sectionTop, width: screenWidth}}>
-                <Text style={styles.containerTopText}>{route.params.name.toUpperCase()}</Text>
-                <Text style={styles.containerTopPrice}>$ {route.params.balanceMoney}</Text>
+                <Text style={styles.containerTopText}>{name.toUpperCase()}</Text>
+                <Text style={styles.containerTopPrice}>$ {moneyFormat(utility)}</Text>
                 {/* BACK BUTTON */}
                 <TouchableOpacity 
                     style={styles.buttonBack}
@@ -50,17 +58,17 @@ export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.E
                 <View style={styles.statsContainer}>
                     <ItemListNavCard 
                         name="Presupuesto Ingreos"
-                        price="300,00"
+                        price={income.toString()}
                         isButton={false}
                     />
                     <ItemListNavCard 
                         name="Presupuesto Egresos"
-                        price="300,00"
+                        price={expense.toString()}
                         isButton={false}
                     />
                     <ItemListNavCard 
                         name="Utilidad"
-                        price="300,00"
+                        price={utility.toString()}
                         isButton={false}
                     />
                 </View>
