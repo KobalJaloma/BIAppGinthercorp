@@ -8,11 +8,11 @@ import {
     StyleSheet
 } from "react-native";
 import { colores } from "../utils/colorPallets";
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import { StackNavigationProp, StackScreenProps } from "@react-navigation/stack";
 import { RootStackParamList } from "../../App";
 import { useScreenSize } from "../hooks/useScreenSize";
-import { ItemListNavCard } from "../components/cards";
+import { ItemListNavCard, BankMovementCard} from "../components/cards";
 import { currentDay } from "../utils";
 import { envConfig } from "../../config";
 import { useFetch } from "../hooks";
@@ -20,9 +20,19 @@ import { useFetch } from "../hooks";
 type BranchPageProps = StackScreenProps<RootStackParamList, 'Unit'>;
 
 export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.Element => {
-    const url = `${envConfig}`;
+    const url = `${envConfig.urlBase}denken/calculosgraficas/detallado_movimientos?fechaI=2023-09-01&fechaF=2023-09-04`;
+    
     const { screenHeight, screenWidth } = useScreenSize();
     const { id, name, expense, income, utility } = route.params;
+    const bankMovementsList = useFetch(url, 'get');
+    
+    useEffect(() => {
+        console.log(JSON.stringify(url));
+        
+        if(!bankMovementsList) 
+            return;
+        console.log(JSON.stringify(bankMovementsList.data));
+    }, [bankMovementsList?.isLoading])
     
     const navigateToHome = () => {
         navigation.navigate('Home');
@@ -73,7 +83,22 @@ export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.E
                     />
                 </View>
                 <View style={styles.chartsContainer}>
-                    <Text>{currentDay()}</Text>
+                    <Text>{currentDay() + ' ' + id}</Text>
+                </View>
+                <View>
+                    <BankMovementCard 
+                        amount={200000}
+                        description="Se hizo una transferencia bancaria a la cuenta 1023"
+                        />
+                    <BankMovementCard 
+                        amount={3000}
+                        description="Pago de Factura"
+                        isIncome={false}
+                    />
+                    <BankMovementCard 
+                        amount={80000}
+                        description="Pago de credito"
+                    />
                 </View>
             </ScrollView>
         </View>

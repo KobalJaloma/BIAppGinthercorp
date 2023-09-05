@@ -22,6 +22,10 @@ export type dataGraphic = {
     legendFontSize: 15
 }
 
+type pieGraphicConfig = {
+  
+}
+
 export const PieGraphic: FC<pieGraphicProps> = ({data}):JSX.Element => {
   
   const { screenWidth } = useScreenSize();
@@ -44,7 +48,7 @@ export const PieGraphic: FC<pieGraphicProps> = ({data}):JSX.Element => {
       <PieChart
         data={pieData}
         width={screenWidth - 20}
-        height={200}
+        height={250}
         chartConfig={chartConf}
         accessor={"population"}
         backgroundColor={'transparent'}

@@ -163,7 +163,7 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
         stats.push( (Math.round(unit.EJERCIDO)/1000 ) ?? 0);
 
         pieData.push({
-          name: unit.FAMILIA,
+          name: unit.FAMILIA??'DESCONOCIDO',
           population: Math.round(unit.EJERCIDO),
           color: randomColor(),
           legendFontColor: colores.textPrimary,
