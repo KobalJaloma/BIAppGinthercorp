@@ -13,7 +13,7 @@ import { LinearGradient } from "react-native-linear-gradient";
 
 const bFunction=()=>{};
 
-export const ItemListNavCard = ({name = '', price = '', isButton=true}):JSX.Element => {
+export const ItemListNavCard = ({name = '', price = '', isButton=true, isMoney=true}):JSX.Element => {
   const { screenWidth } = useScreenSize();
 
   const test = () => {
@@ -40,7 +40,7 @@ export const ItemListNavCard = ({name = '', price = '', isButton=true}):JSX.Elem
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.text}>{name ? name.toUpperCase(): 'NOT FOUND'}</Text>
-          <Text style={styles.price}>$ {price ? moneyFormat() : 'NOT FOUND'}</Text>
+          <Text style={styles.price}>{isMoney && '$'} {price ? moneyFormat() : 'NOT FOUND'}</Text>
         </View>
       </View>
       <TouchableOpacity 

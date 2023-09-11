@@ -7,7 +7,8 @@ import {
   ScrollView,
   Image,
   StatusBar,
-  Alert
+  Alert,
+  ActivityIndicator
 } from "react-native";
 import { StackNavigationProp } from "@react-navigation/stack"; 
 import { colores, chartPallete, currentDay, firstOfMOnth } from '../utils';
@@ -19,6 +20,7 @@ import { envConfig } from "../../config";
 
 // IMPORT TYPES
 import { dataGraphic } from "../components/graphics/pieGraphic";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 
 type HomeScreenProps = {
@@ -32,42 +34,87 @@ const fechaI = firstOfMOnth();
 const fechaF = currentDay();
 
 const url = `${envConfig.urlBase}denken/calculosgraficas/balances?fechaI=${fechaI}&fechaF=${fechaF}`;
-
+const urlToday = `${envConfig.urlBase}denken/calculosgraficas/balances?fechaI=${'2023-09-07'}&fechaF=${'2023-09-07'}`;
+const urlCancelBills = `${envConfig.urlBase}denken/calculosgraficas/facturas_canceladas?fechaI=${fechaI}&fechaF=${fechaF}&count=1`
 
 export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
   
   const balanceFetch = useFetch(url, 'get');
+  const balanceUpdatedFetch = useFetch(urlToday, 'get');
+  const cancelBills = useFetch(urlCancelBills, 'get');
+
   const { screenHeight, screenWidth } = useScreenSize();
   const [budgets, setBudgets] = useState({
     expense: '0.0',
     income: '0.0',
     utility: '0.0'
   })
+  const [cancelBillsCounter, setCancelBillsCounter] = useState<string>('0');
   const [barChart, setbarChart] = useState<any>({
     label: [],
     data: [],
   })
   const [pieChart, setPieChart] = useState<any []>([]);
 
-
   useEffect(() => {
     calculatedBudgets();
     incomeCalculations();
   }, [balanceFetch?.isLoading])
-  
+
+  useEffect(() => {
+    if(!cancelBills?.isLoading) 
+      billsCalculation();
+
+  }, [cancelBills?.isLoading])
+
   // COMPONENT RENDERS
+  const RenderHeaderStateCards = () => {
+    if(!balanceUpdatedFetch?.data)
+      return;
+
+    const prov:any [] = balanceUpdatedFetch.data;
+  
+    if(prov.length == 0) 
+      return;
+    
+    return prov.map( (data, index) => {
+      
+      let total = data.SALDO;
+      console.log('este es el total' + total);
+      
+      if(total < 0) {
+        total = (total) * -1; //change value to positive
+        return <HeaderStateCard 
+          unit={data.FAMILIA}
+          price={moneyFormat(total)}
+          arrow={false}
+          key={index}
+        /> 
+      }
+
+      if(total > 0) {
+        return <HeaderStateCard 
+          unit={data.FAMILIA}
+          price={moneyFormat(total)}
+          arrow={true}
+          key={index}
+        /> 
+      }
+
+    })
+
+  }
+  
   const RenderStateCards = () => {
     if(balanceFetch?.data) {
       
       const units:any[] = balanceFetch.data;
 
-      let i = 0;
-      return units.map( unit => {
+      return units.map( (unit, index) => {
         const expense = parseFloat(unit.PRESUPUESTO?? '0');
         const income = parseFloat(unit.EJERCIDO?? '0');
         let utility = income - expense;
 
-        i++;
         return (
           <AccountStateCard
             price={ utility.toString() ?? 'NO DATA'}
@@ -81,7 +128,7 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
                 utility 
               )
             }
-            key={i}
+            key={index}
           />
         )
       }
@@ -120,7 +167,7 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
       )
       
   }
-  
+
   // REQUIRE CALCULATIONS FOR RENDERS
   const calculatedBudgets = () => {
     let expense = 0;
@@ -181,8 +228,19 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
     
   }
 
+  const billsCalculation = () => {
+    if(!cancelBills?.data) 
+      return;
+    const prov:any = cancelBills.data[0];
+    setCancelBillsCounter(prov.canceladas.toString()??'0');
+  }
+
   const navigateToBranch = (id: string, name: string, income:number, expense:number, utility:number,) => {
     navigation.navigate('Unit', { id: id, name: name, income: income, expense: expense, utility: utility});
+  }
+
+  const moneyFormat = (num: number) => {
+    return num.toLocaleString('en').toString();
   }
 
   return(
@@ -194,16 +252,9 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
           scrollEnabled={true}
           stickyHeaderIndices={[1]}
         >
-          <HeaderStateCard 
-            unit="Secorp"
-            price="10,234,244.00"
-            arrow={false}
-          />
-          <HeaderStateCard 
-            unit="Secorp"
-            price="234,244.00"
-            arrow={true}
-          />
+          {
+            RenderHeaderStateCards()
+          }
         </ScrollView>
         <View style={styles.dockBottom}>
           <View style={styles.dockTextContainer}>
@@ -211,6 +262,17 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
           </View>
         </View>
         <View style={styles.dockPriceIndicator}/> 
+        {/* RELOAD BUTTON */}
+        <TouchableOpacity
+          onPress={() => balanceFetch?.reload()}
+        >
+          <View style={styles.reloadContainer}>
+              <Image
+                source={require('../images/refresh-icon-white.png')}
+                style={styles.reloadImg}
+              />
+          </View>
+        </TouchableOpacity>
       </View>
       <ScrollView 
         style={{...styles.scrollContainer, height: screenHeight-200}}
@@ -244,14 +306,23 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
           <ItemListNavCard 
             name="Presupuesto ingresos"
             price={budgets.income}
+            isButton={false}
             />
           <ItemListNavCard 
             name="Presupuesto egresos"
             price={budgets.expense}
+            isButton={false}
           />
           <ItemListNavCard 
             name="Utilidades"
             price={budgets.utility}
+            isButton={false}
+          />
+          <ItemListNavCard 
+            name="Facturas Canceladas"
+            price={cancelBillsCounter}
+            isButton={false}
+            isMoney={false}
           />
         </View>
       </ScrollView>
@@ -337,6 +408,16 @@ const styles = StyleSheet.create({
   },
   scrollViewGraphic: {
     overflow: 'hidden'
+  },
+  reloadContainer: {
+    position: 'absolute',
+    top: 15,
+    right: 10,
+    zIndex: 10
+  },
+  reloadImg: {
+    width: 30,
+    height: 30
   }
 });
 
@@ -348,7 +429,10 @@ const LoadingScreen: FC<LoadingScreenProps> = ({isSomething}):JSX.Element => {
   return (
     isSomething
     ? <View style={{...stylesLoad.container, width: screenWidth, height: screenHeight}}>
-        <Text style={{fontSize: 50, color: 'white'}}>...loading</Text>
+        <ActivityIndicator
+          size={'large'}
+          color={colores.textSecondary}
+        />
       </View>
     : <View></View>
   )

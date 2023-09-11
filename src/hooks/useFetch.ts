@@ -58,12 +58,16 @@ export const useFetch = (url:string, type: string) => {
       break;
     }
   }
+
+  const reload = () => selector();
+  
   useEffect(() => {
     selector();
   }, [url])
   
   return {
     data,
-    isLoading
+    isLoading,
+    reload
   }
 }
