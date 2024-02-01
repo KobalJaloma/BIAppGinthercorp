@@ -16,4 +16,14 @@ export const firstOfMOnth = () => {
   return `${date.getFullYear()}-${date.getMonth()+1}-01`;
 }
 
+export const lastOfMonth = () => { 
+  const date = new Date();
+  return `${date.getFullYear()}-${date.getMonth()+1}-31`;
+}
+
+export const yesterday = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${format(date.getMonth() + 1)}-${format(date.getDate() == 1 ? date.getDate() : date.getDate() - 1)}`;
+}
+
 

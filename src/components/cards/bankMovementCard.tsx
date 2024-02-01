@@ -86,10 +86,7 @@ export const BankMovementCard:FC<BankMovementProps> = ({
             visible={isModalVisible}
             animationType="slide"
             transparent={true}
-            onRequestClose={() => {
-                // Alert.alert('Modal Has been Close');
-                setIsModalVisible(true);
-            }}
+            onRequestClose={() => setIsModalVisible(true)}
         >
             <View style={{...stylesModal.centerContainer, width: screenWidth, height: screenHeight}}>
                 <View

@@ -8,7 +8,7 @@ import {
 import { colores } from "../../utils/colorPallets";
 import { useScreenSize } from "../../hooks";
 
-export const HeaderStateCard = ({unit = 'UNIT', price = '0.00', arrow=true}):JSX.Element => {
+export const HeaderStateCard = ({unit = 'UNIT', price = '0.00', arrow=true, isEmpty=false}):JSX.Element => {
   
   const { screenHeight, screenWidth } = useScreenSize();
 
@@ -24,12 +24,15 @@ export const HeaderStateCard = ({unit = 'UNIT', price = '0.00', arrow=true}):JSX
       <View style={{...styles.topContainer, width: screenWidth}}>
         <Text style={styles.textTopName}>{unitFormat(unit)}</Text>
         <View style={styles.priceContainer}>
+          {
+            !isEmpty &&
             <View style={styles.icon}>
               <ArrowIcon 
                 state={arrow}
               />
             </View>
-          <Text style={styles.textTopPrice}>{priceFormat(price)}</Text>
+          }
+          <Text style={styles.textTopPrice}>{!isEmpty ? priceFormat(price) : 'Sin Movimientos'}</Text>
         </View>
       </View>
     </View>

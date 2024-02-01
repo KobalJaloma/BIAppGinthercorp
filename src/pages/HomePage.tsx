@@ -10,38 +10,39 @@ import {
   Alert,
   ActivityIndicator
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { StackNavigationProp } from "@react-navigation/stack"; 
-import { colores, chartPallete, currentDay, firstOfMOnth } from '../utils';
+import { colores, chartPallete, currentDay, firstOfMOnth, yesterday, lastOfMonth } from '../utils';
 import { HeaderStateCard, AccountStateCard, ItemListNavCard } from "../components/cards";
 import { useScreenSize, useFetch } from "../hooks";
 import { LineGraphic, PieGraphic, BarGraphic } from "../components/graphics";
 import { RootStackParamList } from "../../App";
 import { envConfig } from "../../config";
-
-// IMPORT TYPES
-import { dataGraphic } from "../components/graphics/pieGraphic";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { LoadingScreen } from "../components/loaders";
 
 
 type HomeScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Home'>;
 }
-type LoadingScreenProps = {
-  isSomething: boolean
-}
 
 const fechaI = firstOfMOnth();
 const fechaF = currentDay();
+const yesterdayDate = yesterday(); 
+const lastMonth = lastOfMonth();
 
 const url = `${envConfig.urlBase}denken/calculosgraficas/balances?fechaI=${fechaI}&fechaF=${fechaF}`;
-const urlToday = `${envConfig.urlBase}denken/calculosgraficas/balances?fechaI=${'2023-09-07'}&fechaF=${'2023-09-07'}`;
-const urlCancelBills = `${envConfig.urlBase}denken/calculosgraficas/facturas_canceladas?fechaI=${fechaI}&fechaF=${fechaF}&count=1`
+const urlToday = `${envConfig.urlBase}denken/calculosgraficas/balances?fechaI=${yesterdayDate}&fechaF=${fechaF}`;
+const urlCancelBills = `${envConfig.urlBase}denken/calculosgraficas/facturas_canceladas?fechaI=${fechaI}&fechaF=${fechaF}&count=1`;
+const incomeBudgetsUrl = `${envConfig.urlBase}denken/calculosgraficas/presupuestoIngresos?fechaI=${fechaI}&fechaF=${lastMonth || 1}`;
+const urlAccountsReceivable = `${envConfig.urlBase}denken/calculosgraficas/totalesCxc?fechaI=${fechaI}&fechaF=${lastMonth}`;
 
 export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
   
   const balanceFetch = useFetch(url, 'get');
   const balanceUpdatedFetch = useFetch(urlToday, 'get');
   const cancelBills = useFetch(urlCancelBills, 'get');
+  const incomeBudgetsFetch = useFetch(incomeBudgetsUrl, 'get');
+  const accountsReceivableFetch = useFetch(urlAccountsReceivable, 'get');
 
   const { screenHeight, screenWidth } = useScreenSize();
   const [budgets, setBudgets] = useState({
@@ -50,40 +51,76 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
     utility: '0.0'
   })
   const [cancelBillsCounter, setCancelBillsCounter] = useState<string>('0');
+  const [incomeBudgets, setIncomeBudgets] = useState<string>('0');
+  const [accountsReceivable, setAccountsReceivable] = useState<any>('0')
   const [barChart, setbarChart] = useState<any>({
     label: [],
     data: [],
   })
   const [pieChart, setPieChart] = useState<any []>([]);
-
+  const [loader, setLoader] = useState<boolean>(false);
+  
   useEffect(() => {
+    if(!balanceFetch) return;
     calculatedBudgets();
     incomeCalculations();
+    loaderHelper(balanceFetch.isLoading);
   }, [balanceFetch?.isLoading])
 
   useEffect(() => {
     if(!cancelBills?.isLoading) 
       billsCalculation();
-
   }, [cancelBills?.isLoading])
 
+  useEffect(() => {
+    if(!incomeBudgetsFetch) return;
+
+    if(!incomeBudgetsFetch?.isLoading)
+      incomeBudgetsCalculations();
+
+    loaderHelper(incomeBudgetsFetch.isLoading);
+  }, [incomeBudgetsFetch?.isLoading])
+  
+  useEffect(() => {
+    if(!accountsReceivableFetch) return;
+
+    if(!accountsReceivableFetch?.isLoading )
+      accountsReceivableCalculations();
+
+    loaderHelper(accountsReceivableFetch.isLoading);
+  }, [accountsReceivableFetch?.isLoading])
+  
   // COMPONENT RENDERS
   const RenderHeaderStateCards = () => {
     if(!balanceUpdatedFetch?.data)
       return;
-
+    
     const prov:any [] = balanceUpdatedFetch.data;
+    console.log(prov);
   
     if(prov.length == 0) 
-      return;
+      return <HeaderStateCard 
+        unit={''}
+        price={''}
+        isEmpty={true}
+      /> 
     
     return prov.map( (data, index) => {
       
       let total = data.SALDO;
-      console.log('este es el total' + total);
       
       if(total < 0) {
         total = (total) * -1; //change value to positive
+        return <HeaderStateCard 
+          unit={data.FAMILIA}
+          price={moneyFormat(total)}
+          arrow={false}
+          key={index}
+        /> 
+      }
+      
+      if(total == 0) {
+        total = (total) * 1; //change value to positive
         return <HeaderStateCard 
           unit={data.FAMILIA}
           price={moneyFormat(total)}
@@ -138,7 +175,6 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
 
   const RenderBarGraphic = () => {
     if(barChart.label.length != 0) {
-      // console.log('Lenght: ' + barChart.label.length);
       return (
         <BarGraphic 
             labels={barChart.label}
@@ -212,9 +248,9 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
         pieData.push({
           name: unit.FAMILIA??'DESCONOCIDO',
           population: Math.round(unit.EJERCIDO),
-          color: randomColor(),
+          color: randomColor() || '#8980F5',
           legendFontColor: colores.textPrimary,
-          legendFontSize: 15
+          legendFontSize: 10
         });
       }
     } );
@@ -235,6 +271,31 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
     setCancelBillsCounter(prov.canceladas.toString()??'0');
   }
 
+  const incomeBudgetsCalculations = () => {
+    if(!incomeBudgetsFetch?.data) return;
+
+    const prov:any = incomeBudgetsFetch.data[0];
+    setIncomeBudgets(prov.total_presupuesto);
+  }
+  
+  const accountsReceivableCalculations = () => {
+    if(!accountsReceivableFetch?.data) return;
+
+    const data:any = accountsReceivableFetch.data;
+    setAccountsReceivable(data[0].total_cxc); // se debe cambiar a cxp el query en backend
+
+  }
+
+  const loaderHelper = (isLoading: boolean) => {
+    if(isLoading) 
+      return setLoader(true);
+
+    setTimeout(() => {
+      setLoader(false);
+    }, 3000);
+  }
+
+
   const navigateToBranch = (id: string, name: string, income:number, expense:number, utility:number,) => {
     navigation.navigate('Unit', { id: id, name: name, income: income, expense: expense, utility: utility});
   }
@@ -243,6 +304,10 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
     return num.toLocaleString('en').toString();
   }
 
+  const test = () => {
+    balanceFetch?.reload();
+  }
+  
   return(
     <SafeAreaView>
       <StatusBar backgroundColor={'white'}/>
@@ -262,17 +327,19 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
           </View>
         </View>
         <View style={styles.dockPriceIndicator}/> 
+
         {/* RELOAD BUTTON */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => balanceFetch?.reload()}
+          style={styles.reloadMainContainer}
         >
           <View style={styles.reloadContainer}>
               <Image
                 source={require('../images/refresh-icon-white.png')}
                 style={styles.reloadImg}
               />
-          </View>
-        </TouchableOpacity>
+          </View> 
+        </TouchableOpacity> */}
       </View>
       <ScrollView 
         style={{...styles.scrollContainer, height: screenHeight-200}}
@@ -287,7 +354,7 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
           }
         </ScrollView>
         <View>
-          <LineGraphic />
+          {/* <LineGraphic /> */}
         </View>
         <ScrollView 
           horizontal
@@ -304,18 +371,35 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
         </View>
         <View style={styles.containerList}>
           <ItemListNavCard 
-            name="Presupuesto ingresos"
-            price={budgets.income}
-            isButton={false}
-            />
+            name="CXC"
+            price={incomeBudgets}
+            isButton={true}
+            fn={()=> navigation.navigate('Receivable')}
+          />
           <ItemListNavCard 
-            name="Presupuesto egresos"
+            name="CXP"
+            price={accountsReceivable}
+            isButton={false}
+            fn={()=> navigation.navigate('Receivable')}
+          />
+          <ItemListNavCard 
+            name="Ingresos"
+            price={budgets.income}
+            isButton={false}  
+          />
+          <ItemListNavCard 
+            name="Egresos"
             price={budgets.expense}
             isButton={false}
           />
           <ItemListNavCard 
-            name="Utilidades"
+            name="Utilidad Neta"
             price={budgets.utility}
+            isButton={false}
+          />
+          <ItemListNavCard 
+            name="Presupuesto Utilidad"
+            price={(parseFloat(incomeBudgets) - parseFloat(budgets.expense) - parseFloat(accountsReceivable)).toString()}
             isButton={false}
           />
           <ItemListNavCard 
@@ -324,14 +408,19 @@ export const Home: FC<HomeScreenProps> = ({navigation}):JSX.Element => {
             isButton={false}
             isMoney={false}
           />
+          {/* <ItemListNavCard 
+            name="testButton"
+            price={'0'}
+            isButton={true}
+            isMoney={false}
+            fn={() => navigation.navigate('Test')}
+          /> */}
         </View>
       </ScrollView>
-      {
-        balanceFetch?.isLoading && 
-        <LoadingScreen
-          isSomething={balanceFetch?.isLoading}
-        />
-      }
+       
+      <LoadingScreen
+        isSomething={loader}
+      />
       
     </SafeAreaView>
   )
@@ -409,11 +498,18 @@ const styles = StyleSheet.create({
   scrollViewGraphic: {
     overflow: 'hidden'
   },
+  reloadMainContainer: {
+    // position: 'absolute',
+    top: -100,
+    right: -100,
+    zIndex: 100,
+    width: 100,
+    height: 100,
+    backgroundColor: 'yellow'
+  },
   reloadContainer: {
-    position: 'absolute',
-    top: 15,
-    right: 10,
-    zIndex: 10
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   reloadImg: {
     width: 30,
@@ -421,32 +517,6 @@ const styles = StyleSheet.create({
   }
 });
 
+const { blue, bluePink, cyan} = chartPallete;
 
-const LoadingScreen: FC<LoadingScreenProps> = ({isSomething}):JSX.Element => {
-  
-  const { screenHeight, screenWidth } = useScreenSize();
-  
-  return (
-    isSomething
-    ? <View style={{...stylesLoad.container, width: screenWidth, height: screenHeight}}>
-        <ActivityIndicator
-          size={'large'}
-          color={colores.textSecondary}
-        />
-      </View>
-    : <View></View>
-  )
-}
-
-const { blue, bluePink} = chartPallete;
-const randomColor = () => bluePink[Math.round(Math.random() * bluePink.length)];
-
-const stylesLoad = StyleSheet.create({
-  container: {
-    backgroundColor: colores.primary  ,
-    zIndex: 10,
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
-});
+const randomColor = () => cyan[Math.round(Math.random() * (cyan.length-1))];

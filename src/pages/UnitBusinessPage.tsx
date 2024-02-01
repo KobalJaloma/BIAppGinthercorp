@@ -16,17 +16,21 @@ import { RootStackParamList } from "../../App";
 import { useScreenSize } from "../hooks/useScreenSize";
 import { ItemListNavCard, BankMovementCard} from "../components/cards";
 import { BarGraphic } from "../components/graphics";
-import { currentDay, firstOfMOnth } from "../utils";
+import { currentDay, firstOfMOnth, lastOfMonth  } from "../utils";
 import { envConfig } from "../../config";
 import { useFetch } from "../hooks";
+import { LoadingScreen } from "../components/loaders";
+
+import { getConfigData, systemConfigDefault } from "../config/systemConfig";
 
 type BranchPageProps = StackScreenProps<RootStackParamList, 'Unit'>;
 
 const today = currentDay();
 const firstMonth = firstOfMOnth();
+const lastMonth = lastOfMonth();
 
 export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.Element => {
-    const limit = 5;
+    const [limit, setLimit] = useState(systemConfigDefault.movementLimit); //default
     const { id, name, expense, income, utility } = route.params;
     const { screenHeight, screenWidth } = useScreenSize();
 
@@ -47,16 +51,17 @@ export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.E
 
     const url = `${envConfig.urlBase}denken/calculosgraficas/detallado_movimientos?fechaI=${firstMonth}&fechaF=${today}&unidad=${id}&limit=${limit}&index=${indexList}${setMovementUrlFilter()}`;
     const balanceUrl = `${envConfig.urlBase}denken/calculosgraficas/balances?fechaI=${firstMonth}&fechaF=${today}&unidad=${id}`;
+    const incomeBudgetsUrl = `${envConfig.urlBase}denken/calculosgraficas/presupuestoIngresos?fechaI=${firstMonth}&fechaF=${lastMonth || 1}&unidad=${id}`;
     
     const [movementList, setMovementList] = useState<any []>([]);
-    const bankMovementsList = useFetch(url, 'get');
     const [existMovements, setExistMovements] = useState<boolean>(true);
+    const [incomeBudgets, setIncomeBudgets] = useState<string>('0');
     
+    const bankMovementsList = useFetch(url, 'get');
     const balanceFetch = useFetch(balanceUrl, 'get');
+    const incomeBudgetsFetch = useFetch(incomeBudgetsUrl, 'get');
 
     useEffect(() => {
-        console.log(JSON.stringify(url));
-        
         if(!bankMovementsList) 
             return;
 
@@ -73,10 +78,12 @@ export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.E
             return
         if(!balanceFetch?.data) 
             return;
-        console.log(balanceFetch.data);
         
     }, [balanceFetch?.isLoading])
     
+    useEffect(() => {
+        incomeBudgetsCalculations();
+    }, [incomeBudgetsFetch?.isLoading])
 
     const navigateToHome = () => {
         navigation.navigate('Home');
@@ -119,6 +126,12 @@ export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.E
         setIndexList(0);
     }
 
+    const incomeBudgetsCalculations = () => {
+        if(!incomeBudgetsFetch?.data)
+            return;
+        const prov:any = incomeBudgetsFetch.data[0];
+        setIncomeBudgets(prov.total_presupuesto ?? '0')
+    }
     // HELPERS RENDER COMPONENTS
     const renderBankMovement = () => {
         if(movementList.length == 0) 
@@ -174,12 +187,18 @@ export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.E
             <ScrollView style={styles.scrollContainer}>
                 <View style={styles.statsContainer}>
                     <ItemListNavCard 
-                        name="Presupuesto Ingreos"
+                        name="CXC"
+                        price={incomeBudgets}
+                        isButton={parseFloat(incomeBudgets) > 0} 
+                        fn={() => navigation.navigate('Receivable', {id: id, name: name})}
+                    />
+                    <ItemListNavCard 
+                        name="Ingreos"
                         price={income.toString()}
                         isButton={false}
                     />
                     <ItemListNavCard 
-                        name="Presupuesto Egresos"
+                        name="Egresos"
                         price={expense.toString()}
                         isButton={false}
                     />
@@ -245,6 +264,13 @@ export const UnitBusinessPage: FC<BranchPageProps> = ({route, navigation}):JSX.E
                     </View>
                 </View>
             </ScrollView>
+            {
+                incomeBudgetsFetch?.isLoading && 
+                <LoadingScreen
+                    isSomething={incomeBudgetsFetch?.isLoading}
+                />
+            }
+
         </View>
     )
 }
@@ -276,7 +302,9 @@ const RenderStateArrow = (state = true, type = 1) => {
     )
 }
 
+
 const topNotchSize = 30;
+
 const styles = StyleSheet.create({
     container: {
         justifyContent: 'center',
@@ -424,3 +452,4 @@ const stylesArrow = StyleSheet.create({
       transform: [{rotate: '180deg'}]
     }
 });
+  

@@ -87,11 +87,11 @@ export const BarGraphic: FC<BarGraphic> = (
         {
           isVisibleTop
           ?<Image 
-            source={require('../../images/eyeOpen.png')}
+            source={require('../../images/eyeOpen-white.png')}
             style={styles.feedbackImage}
           />
           :<Image 
-            source={require('../../images/eyeClose.png')}
+            source={require('../../images/eyeClose-white.png')}
             style={styles.feedbackImage}
           />
         }

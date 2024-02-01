@@ -10,7 +10,9 @@ import {
   TouchableOpacity,
   Image,
   StatusBar,
-  Alert
+  Alert,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { colores } from '../utils/colorPallets';
 import { useState, useRef, useEffect } from "react";
@@ -45,6 +47,8 @@ export const Login: FC<LoginScreenProps> = ({navigation}):JSX.Element => {
       user: userInput,
       password: passwordInput
     })
+
+    // Alert.alert(JSON.stringify(payload));
   }
 
   const handleBorderColor = (side:string) => {
@@ -66,75 +70,82 @@ export const Login: FC<LoginScreenProps> = ({navigation}):JSX.Element => {
   return(
     <SafeAreaView>
       <StatusBar backgroundColor={'white'}/>
-      <View style={styles.container}>
-        <View style={styles.imageContainer}> 
-          <Image 
-            source={require('../images/GinthercorpLogoLow.png')}
-            style={styles.image}
-          />
-        </View>
-        <Text style={styles.title}>Iniciar Sesión</Text>
-        <TextInput 
-          style={{...styles.input, borderColor: `${handleBorderColor('USER')}`}}
-          placeholder=" Usuario"
-          value={userInput}
-          onChangeText={onChangeUser}
-        />
-        <View style={styles.containerPassword}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.container}>
+          <View style={styles.imageContainer}> 
+            <Image 
+              source={require('../images/GinthercorpLogoLow.png')}
+              style={styles.image}
+            />
+          </View>
+          <Text style={styles.title}>Iniciar Sesión</Text>
           <TextInput 
-            style={{...styles.input, flex: 1, borderColor: `${handleBorderColor('PASSWORD')}`}}
-            placeholder="Contraseña"
-            secureTextEntry={isPasswordSecure}
-            value={passwordInput}
-            onChangeText={onChangePassword}
+            style={{...styles.input, borderColor: `${handleBorderColor('USER')}`}}
+            placeholder=" Usuario"
+            placeholderTextColor={'black'}
+            value={userInput}
+            onChangeText={onChangeUser}
           />
-          <View style={styles.containerEyePassword}>
-            <TouchableOpacity 
-              onPress={()=>setisPasswordSecure(!isPasswordSecure)}
-            >
-              {
-                isPasswordSecure 
-                ? <Image 
-                    source={require('../images/eyeClose.png')}
-                    style={styles.imageHidePassword}
+          <View style={styles.containerPassword}>
+            <TextInput 
+              style={{...styles.input, flex: 1, borderColor: `${handleBorderColor('PASSWORD')}`}}
+              placeholder="Contraseña"
+              placeholderTextColor={'black'}
+            
+              secureTextEntry={isPasswordSecure}
+              value={passwordInput}
+              onChangeText={onChangePassword}
+            />
+            <View style={styles.containerEyePassword}>
+              <TouchableOpacity 
+                onPress={()=>setisPasswordSecure(!isPasswordSecure)}
+              >
+                {
+                  isPasswordSecure 
+                  ? <Image 
+                      source={require('../images/eyeClose.png')}
+                      style={styles.imageHidePassword}
+                      />
+                      : <Image 
+                      source={require('../images/eyeOpen.png')}
+                      style={styles.imageHidePassword}
                     />
-                    : <Image 
-                    source={require('../images/eyeOpen.png')}
-                    style={styles.imageHidePassword}
-                  />
-              }
+                }
+              </TouchableOpacity>
+              
+              {/* <Button 
+                title="eye"
+                color={isPasswordSecure ? colores.textSecondary : colores.primary}
+                onPress={() => setisPasswordSecure(!isPasswordSecure)}
+              /> */}
+            </View>
+          </View>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              style={styles.loginButton}
+              onPress={changePayload}
+            >
+              <Text style={styles.loginText}>Login</Text>  
             </TouchableOpacity>
             
-            {/* <Button 
-              title="eye"
-              color={isPasswordSecure ? colores.textSecondary : colores.primary}
-              onPress={() => setisPasswordSecure(!isPasswordSecure)}
-            /> */}
           </View>
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={styles.loginButton}
-            onPress={changePayload}
-          >
-            <Text style={styles.loginText}>Login</Text>  
-          </TouchableOpacity>
-          
-        </View>
-        {
-          data.side == 'USER' && <ErrorTag text={'Usuario No Encontrado'}/>
-        }
-        {
-          data.side == 'PASSWORD' && <ErrorTag text={'Contraseña Incorrecta'}/> 
-        }
-        <View>
-          {/* <Text style={{color: `${isLoading?'green': 'red'}`}}>{'Esta cargando ' + isLoading}</Text>
-          <Text style={{color: `${isAuth?'green': 'red'}`}}>{'Este es el auth ' + isAuth}</Text>
-          <Text>{'Este es la data ' + JSON.stringify(data)}</Text>
-          <Text>{'Este es el payload ' + JSON.stringify(payload)}</Text>
-          <Text>{'Estos Son Los Colores ' + JSON.stringify(inputBorderColor)}</Text> */}
-        </View>
-      </View>    
+          {
+            data.side == 'USER' && <ErrorTag text={'Usuario No Encontrado'}/>
+          }
+          {
+            data.side == 'PASSWORD' && <ErrorTag text={'Contraseña Incorrecta'}/> 
+          }
+          <View>
+            {/* <Text style={{color: `${isLoading?'green': 'red'}`}}>{'Esta cargando ' + isLoading}</Text>
+            <Text style={{color: `${isAuth?'green': 'red'}`}}>{'Este es el auth ' + isAuth}</Text>
+            <Text>{'Este es la data ' + JSON.stringify(data)}</Text>
+            <Text>{'Este es el payload ' + JSON.stringify(payload)}</Text>
+            <Text>{'Estos Son Los Colores ' + JSON.stringify(inputBorderColor)}</Text> */}
+          </View>
+        </View>    
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }

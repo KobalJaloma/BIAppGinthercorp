@@ -16,13 +16,15 @@ import { Login } from "./src/auth/login";
 // import { Home } from "./src/pages/guardado";
 import { useScreenSize } from "./src/hooks";
 import { authProvider } from "./src/context/authProvider";
-import { UnitBusinessPage, Home } from "./src/pages";
+import { UnitBusinessPage, Home, ReceivablePage, TestPage } from "./src/pages";
 
 
 export type RootStackParamList = {
   Login: undefined,
   Home: undefined,
   Unit: UnitBussines,
+  Receivable?: Receivable,
+  Test: undefined
 }
 
 interface UnitBussines {
@@ -31,6 +33,11 @@ interface UnitBussines {
   income: number;
   expense: number;
   utility: number;
+}
+
+type Receivable = {
+  id: string,
+  name?: string
 }
 
 
@@ -64,6 +71,16 @@ const App: FC = () => {
           <Stack.Screen 
             name='Unit'
             component={UnitBusinessPage}
+            options={{title: 'Branch', cardStyle: {...styles.white}}}
+          />
+          <Stack.Screen 
+            name='Receivable'
+            component={ReceivablePage}
+            options={{title: 'Branch', cardStyle: {...styles.white}}}
+          />
+          <Stack.Screen 
+            name='Test'
+            component={TestPage}
             options={{title: 'Branch', cardStyle: {...styles.white}}}
           />
         </Stack.Navigator>

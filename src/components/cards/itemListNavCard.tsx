@@ -13,7 +13,7 @@ import { LinearGradient } from "react-native-linear-gradient";
 
 const bFunction=()=>{};
 
-export const ItemListNavCard = ({name = '', price = '', isButton=true, isMoney=true}):JSX.Element => {
+export const ItemListNavCard = ({name = '', price = '', isButton=true, isMoney=true, fn = bFunction, background = colores.primaryDark}):JSX.Element => {
   const { screenWidth } = useScreenSize();
 
   const test = () => {
@@ -28,7 +28,7 @@ export const ItemListNavCard = ({name = '', price = '', isButton=true, isMoney=t
     <LinearGradient 
       start={{x : 0,y : 0}}
       end={{x : 1,y : 0}}
-      colors={[colores.primaryDark, colores.primary]}
+      colors={[background, colores.primary]}
       style={{...styles.cardContainer, width: screenWidth-20}}
     >
       <View style={styles.infoContainer}>
@@ -45,7 +45,7 @@ export const ItemListNavCard = ({name = '', price = '', isButton=true, isMoney=t
       </View>
       <TouchableOpacity 
         style={{...styles.navContainer, opacity: isButton?1:0}}
-        onPress={test}
+        onPress={fn}
         disabled={!isButton}
       >
         <Image 

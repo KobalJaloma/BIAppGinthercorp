@@ -1,14 +1,18 @@
 import {  
   PieChart
 } from "react-native-chart-kit";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, useRef } from "react";
 import {  
   View,
   StyleSheet,
+  Image,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+  Text
 } from "react-native";
 import { colores, chartPallete } from "../../utils/colorPallets";
 import { useScreenSize } from "../../hooks";
-import { Text } from "react-native-svg";
 
 type pieGraphicProps = {
   data: any[]
@@ -22,31 +26,63 @@ export type dataGraphic = {
     legendFontSize: 15
 }
 
-type pieGraphicConfig = {
-  
-}
 
 export const PieGraphic: FC<pieGraphicProps> = ({data}):JSX.Element => {
   
-  const { screenWidth } = useScreenSize();
+  const { screenWidth, screenHeight } = useScreenSize();
   const [pieData, setPieData] = useState<any []>(defaultData);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   
   useEffect(() => {
     changeData();
   }, [data])    
   
   const changeData = () => {
-    let dataLength = data.length;
+    const dataLength = data.length;
     if(!data || dataLength <= 0) return;
+    makePieData(data);
+  }
 
-    setPieData(data);
+  const makePieData = (data: any[]) => {
+    //PENDIENTE optimizacion
+    const maxInit = 15;
+    const prov = data.map( (dataMap, index) => ({...dataMap, state: index < maxInit}));
+    setPieData(prov);
+  }
+
+  const setAllFilter = (state:boolean) => {
+    //change status of all options
+    const prov = pieData.map((dataMap) => ({...dataMap, state: state}));
+    setPieData(prov);
+  }
+
+  const filterData = (data:any, name:string = 'name') => {
+    const datos = pieData.map( (datos) => {
+      return datos[name] == data ? {...datos, state: !datos.state} : datos
+    });
+    setPieData(datos);
+  }
+
+  const handleViewModal = () => { 
+    setIsModalVisible(!isModalVisible);
   }
 
   return(
 
     <View style={styles.container}>
+      {/* FILTER BUTTON */}
+      <TouchableOpacity 
+        style={styles.filterContainer}
+        activeOpacity={1}
+        onPress={handleViewModal}
+      >
+        <Image
+          source={require('../../images/filter-icon.png')}
+          style={styles.filterImg}
+        />
+      </TouchableOpacity>
       <PieChart
-        data={pieData}
+        data={pieData.filter( (data) => data.state == true)}
         width={screenWidth - 20}
         height={250}
         chartConfig={chartConf}
@@ -54,10 +90,91 @@ export const PieGraphic: FC<pieGraphicProps> = ({data}):JSX.Element => {
         backgroundColor={'transparent'}
         paddingLeft={"15"}
         avoidFalseZero={true}
-        hasLegend={true}
+        hasLegend={true} //labels
         center={[0, 0]}
         absolute={false}
       />  
+      <Modal
+        visible={isModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={{...modalStyles.container, width: screenWidth, height: screenHeight}}>
+          <View style={modalStyles.modalContainer}>
+            <View style={modalStyles.modalHeader}>
+              <View style={modalStyles.exitContainer}>
+                <TouchableOpacity 
+                  style={modalStyles.exitButton}
+                  onPress={handleViewModal}  
+                  activeOpacity={1}
+                >
+                  <Image
+                    source={require('../../images/right.png')}
+                    style={modalStyles.exitImage}
+                  />
+                </TouchableOpacity>
+              </View>
+              <View style={modalStyles.filterContainer}>
+                <TouchableOpacity 
+                  style={modalStyles.filterButtons}
+                  onPress={() => setAllFilter(true)}  
+                  activeOpacity={1}
+                >
+                  <Image
+                    source={require('../../images/check.png')}
+                    style={modalStyles.filterCheck}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={modalStyles.filterButtons}
+                  onPress={() => setAllFilter(false)}  
+                  activeOpacity={1}
+                >
+                  <Image
+                    source={require('../../images/uncheck.png')}
+                    style={modalStyles.filterCheck}
+                  />
+                </TouchableOpacity>
+              </View>
+              </View>
+            <View style={modalStyles.optionsContainer}>
+              <ScrollView
+                horizontal={false}
+                style={{}}
+              >
+                {
+                  pieData.map( ({name, state}, index) => 
+                    (
+                      <TouchableOpacity 
+                        key={index}
+                        activeOpacity={1}
+                        onPress={() => filterData(name)}
+                        style={{...modalStyles.optionsButton,paddingVertical: 10}}
+                      >
+                        {
+                          state 
+                          ?
+                          <Image
+                            source={require('../../images/check-black.png')} 
+                            style={{...modalStyles.optionsIcon}}
+                          />
+                          :
+                          <Image 
+                            source={require('../../images/uncheck-black.png')}
+                            style={modalStyles.optionsIcon}
+                          />
+                        }
+                        <Text style={modalStyles.optionsText}>{name}</Text>
+                      </TouchableOpacity>
+                    )
+                  )
+                }
+              </ScrollView>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -102,71 +219,15 @@ const defaultData: any[] = [{
   }
 ];
 
-// const defaultData: any[] = [{
-//   "color": "#4cc9f0",
-//   "legendFontColor": "#23303f",
-//   "legendFontSize": "#23303f",
-//   "name": "SECORP",
-//   "population": 2327891
-// },
-// {
-//   "color": "#480ca8",
-//   "legendFontColor": "#23303f",
-//   "legendFontSize": "#23303f",
-//   "name": "ALARMAS",
-//   "population": 27743
-// },
-// {
-//   "color": "#3f37c9",
-//   "legendFontColor": "#23303f",
-//   "legendFontSize": "#23303f",
-//   "name": "VISION",
-//   "population": 12742
-// },
-// {
-//   "color": "#480ca8",
-//   "legendFontColor": "#23303f",
-//   "legendFontSize": "#23303f",
-//   "name": "REAL SHINY",
-//   "population": 475809
-// },
-// {
-//   "color": "#b5179e",
-//   "legendFontColor": "#23303f",
-//   "legendFontSize": "#23303f",
-//   "name": "CAUDILLOS",
-//   "population": 1650
-// },
-// {
-//   "color": "#3a0ca3",
-//   "legendFontColor": "#23303f",
-//   "legendFontSize": "#23303f",
-//   "name": "TOP TICKET",
-//   "population": 242107
-// },
-// {
-//   "color": "#480ca8",
-//   "legendFontColor": "#23303f",
-//   "legendFontSize": "#23303f",
-//   "name": "MODEM",
-//   "population": 13294
-// },
-// {
-//   "color": "#4895ef",
-//   "legendFontColor": "#23303f",
-//   "legendFontSize": "#23303f",
-//   "name": "PREMIUM PARKING",
-//   "population": 1073
-// }];
-
 const chartConf = {
-  backgroundColor: colores.primary,
-  backgroundGradientFrom: colores.primaryDark,
-  backgroundGradientTo: colores.primary,  
+  backgroundGradientFrom: "#1E2923",
+  backgroundGradientFromOpacity: 0,
+  backgroundGradientTo: "#08130D",
+  backgroundGradientToOpacity: 0.5,
   color: (opacity = 1) => `rgba(26, 255, 146, ${opacity})`,
-  strokeWidth: 3, // optional, default 3
+  strokeWidth: 2, // optional, default 3
   barPercentage: 0.5,
-  useShadowColorFromDataset: false
+  useShadowColorFromDataset: false // optional
 }
 
 const styles = StyleSheet.create({
@@ -175,5 +236,101 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent'
+  },
+  filterContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: 50,
+    width: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1
+  },
+  filterPress: {
+    backgroundColor: 'blue'
+  },
+  filterImg: {
+    height: 25,
+    width: 25
+  }
+});
+
+const modalStyles = StyleSheet.create({
+  container: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  modalContainer: {
+    backgroundColor: '#ffff',
+    height: 600,
+    width: 350,
+    borderRadius: 10,
+    justifyContent: 'flex-start',
+  },
+  modalHeader: {
+    backgroundColor: colores.primary,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignContent: 'center',
+    height: 50,
+    borderTopRightRadius: 5,
+    borderTopLeftRadius: 5,
+  },
+  exitContainer: {
+    // backgroundColor: 'yellow',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  exitButton: {
+    marginLeft: 5,
+    width: 30,
+    height: 30,
+    // backgroundColor: colores.textSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exitImage: {
+    width: 30,
+    height: 30,
+    transform: [{rotate: '180deg'}]
+  },
+  filterContainer: {
+    flex: 1,
+    marginRight: 10,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center'
+  },
+  filterButtons: {
+    marginLeft: 10,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterCheck: {
+    width: 30,
+    height: 30
+  },
+  optionsContainer: {
+    height: 550,
+  },
+  optionsButton: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start'
+  },
+  optionsIcon: {
+    width: 20, 
+    height: 20,
+    marginLeft: 10, 
+  },
+  optionsText: {
+    textAlignVertical: 'center',
+    color: colores.textPrimary,
+    marginLeft: 10
   }
 });
